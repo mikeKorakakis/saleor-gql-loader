@@ -51,6 +51,7 @@ def graphql_request(query, variables={}, headers={},
     )
 
     parsed_response = json.loads(response.text)
+    print(parsed_response)
     if response.status_code != 200:
         raise Exception("{message}\n extensions: {extensions}".format(
             **parsed_response["errors"][0]))

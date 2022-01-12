@@ -11,6 +11,8 @@ project for easier testing.
 
 """
 from .utils import graphql_request, graphql_multipart_request, override_dict, handle_errors, get_payload
+import json
+import time
 
 
 class ETLDataLoader:
@@ -245,7 +247,7 @@ class ETLDataLoader:
             when warehouseErrors is not an empty list
         """
         default_kwargs = {
-            "companyName": "The Fake Company",
+            "slug": "fake_company",
             "email": "fake@example.com",
             "name": "fake warehouse",
             "address": {
@@ -268,7 +270,7 @@ class ETLDataLoader:
                     warehouse {
                         id
                     }
-                    warehouseErrors {
+                    errors {
                         field
                         message
                         code
@@ -279,9 +281,11 @@ class ETLDataLoader:
 
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
+        # print(response["data"]["createWarehouse"]["errors"])
 
-        errors = response["data"]["createWarehouse"]["warehouseErrors"]
-        handle_errors(errors)
+        # errors = response["data"]["createWarehouse"]["errors"]
+        # if errors:
+        #     handle_errors(errors)
 
         return response["data"]["createWarehouse"]["warehouse"]["id"]
 
@@ -530,7 +534,11 @@ class ETLDataLoader:
             when productErrors is not an empty list.
         """
         default_kwargs = {
-            "name": "default"
+            "name": "default",
+            "description": json.dumps({
+                "time": time.time(), "blocks": [{"type": "paragraph", "data": {"text": "test description"}}], "version": "2.20.0"
+            }),
+            "seo": {"title": "", "description": ""}
         }
 
         override_dict(default_kwargs, kwargs)
@@ -545,7 +553,7 @@ class ETLDataLoader:
                     category {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -557,7 +565,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["categoryCreate"]["productErrors"]
+        errors = response["data"]["categoryCreate"]["errors"]
         handle_errors(errors)
 
         return response["data"]["categoryCreate"]["category"]["id"]
@@ -745,7 +753,8 @@ class ETLDataLoader:
             }
         """
 
-        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
 
         errors = response["data"]["customerCreate"]["accountErrors"]
         handle_errors(errors)
@@ -784,10 +793,12 @@ class ETLDataLoader:
                     }
                 """
 
-        response = graphql_request(query, variables, self.headers, self.endpoint_url)
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
 
         if (
-            len(response["data"]["updatePrivateMetadata"]["item"]["privateMetadata"])
+            len(response["data"]["updatePrivateMetadata"]
+                ["item"]["privateMetadata"])
             > 0
         ):
             return item_id

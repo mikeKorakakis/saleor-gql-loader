@@ -227,6 +227,65 @@ class ETLDataLoader:
 
         return response["data"]["shopAddressUpdate"]["shop"]["companyAddress"]
 
+    def create_channel(self, **kwargs):
+        """create a channel.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            overrides the default value set to create the channel refer to the
+            ChannelCreateInput graphQL type to know what can be overriden.
+
+        Returns
+        -------
+        id : str
+            the id of the warehouse created
+
+        Raises
+        ------
+        Exception
+            when errors is not an empty list
+        """
+        default_kwargs = {
+            "name": "Default",
+            "isActive": True,
+            "defaultCountry": "GR",
+            "currencyCode": "EUR",
+            "slug":"default",
+        }
+
+        override_dict(default_kwargs, kwargs)
+
+        variables = {
+            "input": default_kwargs
+        }
+
+        query = """
+            mutation ChannelCreate($input: ChannelCreateInput!) {
+                channelCreate(input: $input) {
+                    channel {
+                        id
+                    }
+                    errors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+        # print(response["data"]["createWarehouse"]["errors"])
+
+        # errors = response["data"]["createWarehouse"]["errors"]
+        # if errors:
+        #     handle_errors(errors)
+
+        return response["data"]["channelCreate"]["channel"]["id"]
+
+
     def create_warehouse(self, **kwargs):
         """create a warehouse.
 
@@ -368,7 +427,8 @@ class ETLDataLoader:
         """
         default_kwargs = {
             "inputType": "DROPDOWN",
-            "name": "default"
+            "name": "default",
+            "type": "PRODUCT_TYPE"
         }
 
         override_dict(default_kwargs, kwargs)
@@ -383,7 +443,7 @@ class ETLDataLoader:
                     attribute {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -395,7 +455,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["attributeCreate"]["productErrors"]
+        errors = response["data"]["attributeCreate"]["errors"]
         handle_errors(errors)
 
         return response["data"]["attributeCreate"]["attribute"]["id"]
@@ -439,7 +499,7 @@ class ETLDataLoader:
                     attribute{
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -451,7 +511,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["attributeValueCreate"]["productErrors"]
+        errors = response["data"]["attributeValueCreate"]["errors"]
         handle_errors(errors)
 
         return response["data"]["attributeValueCreate"]["attribute"]["id"]
@@ -482,6 +542,7 @@ class ETLDataLoader:
             "productAttributes": [],
             "variantAttributes": [],
             "isDigital": "false",
+            "kind": "NORMAL"
         }
 
         override_dict(default_kwargs, kwargs)
@@ -496,7 +557,7 @@ class ETLDataLoader:
                     productType {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -508,7 +569,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["productTypeCreate"]["productErrors"]
+        errors = response["data"]["productTypeCreate"]["errors"]
         handle_errors(errors)
 
         return response["data"]["productTypeCreate"]["productType"]["id"]
@@ -596,8 +657,8 @@ class ETLDataLoader:
             "name": "default",
             "description": "default",
             "productType": product_type_id,
-            "basePrice": 0.0,
-            "sku": "default"
+            # "basePrice": 0.0,
+            # "sku": "default"
         }
 
         override_dict(default_kwargs, kwargs)
@@ -612,7 +673,7 @@ class ETLDataLoader:
                     product {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -624,7 +685,7 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["productCreate"]["productErrors"]
+        errors = response["data"]["productCreate"]["errors"]
         handle_errors(errors)
 
         return response["data"]["productCreate"]["product"]["id"]

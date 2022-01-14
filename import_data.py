@@ -86,13 +86,13 @@ if True:
 
 if True:
     for i, product in enumerate(products):
-        print(product_type_id)
-        print(product["name"])
-        print(product["description"])
-        print(product["price"])
-        print(product["sku"])
-        print(product["category"])
-        print([{"id": strength_attribute_id, "values": [product["strength"]]}])
+        # print(product_type_id)
+        # print(product["name"])
+        # print(product["description"])
+        # print(product["price"])
+        # print(product["sku"])
+        # print(product["category"])
+        # print([{"id": strength_attribute_id, "values": [product["strength"]]}])
         product_id = data_loader.create_product(product_type_id,
                                                 name=product["name"],
                                                 description=json.dumps({
@@ -103,26 +103,46 @@ if True:
                                                 # basePrice=product["price"],
                                                 # sku=product["sku"],
                                                 category=cat_to_id[product["category"]],
-                                                attributes=json.dumps([
-                                                    {"id": strength_attribute_id, "values": [product["strength"]]}]),
-                                                isPublished=True)
+                                                attributes=[
+                                                    {"id": strength_attribute_id, "values": [product["strength"]]}],
+                                                # isPublished=True
+                                                )
+        print(product_id)
         products[i]["id"] = product_id
 
 # create some variant for each product:
+product_variants = []
 if True:
     for product in products:
         for i, qty in enumerate(unique_qty):
             print(product_id)
-            print(product["sku"].replace("-00", "-1{}".format(i+1)))
-            print([{"id": qty_attribute_id, "values": [qty]}])
-            print(product["price"])
-            print(0.75)
-            print([{"warehouse": warehouse_id, "quantity": 15}])
-            variant_id = data_loader.create_product_variant(product_id,
+            print({"id": qty_attribute_id, "values": [qty]})
+            # print(product["sku"].replace("-00", "-1{}".format(i+1)))
+            # print([{"id": qty_attribute_id, "values": [qty]}])
+            # print(product["price"])
+            # print(0.75)
+            # print([{"warehouse": warehouse_id, "quantity": 15}])
+            variant_id = data_loader.create_product_variant(product["id"],
                                                             sku=product["sku"].replace(
                                                                 "-00", "-1{}".format(i+1)),
-                                                            attributes=json.dumps([
-                                                                {"id": qty_attribute_id, "values": [qty]}]),
+                                                            attributes=[
+                                                                {"id": qty_attribute_id, "values": [qty]}],
                                                             # costPrice=product["price"],
                                                             weight=0.75,
                                                             stocks=[{"warehouse": warehouse_id, "quantity": 15}])
+            product_variants.append(variant_id)
+
+print(product_variants)
+if True:
+    for product in products:
+        product_channel_listing_update = data_loader.product_channel_listing_update(product["id"],channelId=channel_id, isAvailableForPurchase=True, isPublished=True
+        # , addVariants=product_variants
+        )
+
+if True:
+    # for product in products:
+    # print(channel_id)
+    for product_variant in product_variants:
+        # print(product_variant)
+        product_variant_channel_id = data_loader.product_variant_channel_listing_update(product_variant,
+                                                                                        channelId=channel_id, price=10, costPrice=8)

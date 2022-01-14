@@ -251,7 +251,7 @@ class ETLDataLoader:
             "isActive": True,
             "defaultCountry": "GR",
             "currencyCode": "EUR",
-            "slug":"default",
+            "slug": "default",
         }
 
         override_dict(default_kwargs, kwargs)
@@ -284,7 +284,6 @@ class ETLDataLoader:
         #     handle_errors(errors)
 
         return response["data"]["channelCreate"]["channel"]["id"]
-
 
     def create_warehouse(self, **kwargs):
         """create a warehouse.
@@ -730,7 +729,7 @@ class ETLDataLoader:
                     productVariant {
                         id
                     }
-                    productErrors {
+                    errors {
                         field
                         message
                         code
@@ -742,10 +741,127 @@ class ETLDataLoader:
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
 
-        errors = response["data"]["productVariantCreate"]["productErrors"]
+        errors = response["data"]["productVariantCreate"]["errors"]
         handle_errors(errors)
 
         return response["data"]["productVariantCreate"]["productVariant"]["id"]
+
+    def product_channel_listing_update(self, product_id, **kwargs):
+        """  # Manage product variant prices in channels.
+
+        Parameters
+        ----------
+        id : str
+            id for which the product variant to be managed.
+        **kwargs : dict, optional
+            overrides the default value set to the manage products in channels refer
+            to the ProductChannelListingUpdateInput graphQL type to know what can be
+            overriden.
+
+        Returns
+        -------
+        id : str
+            the id of the product managed.
+
+        Raises
+        ------
+        Exception
+            when errors is not an empty list.
+        """
+        default_kwargs = {
+            "channelId": "product_variant_id",
+            "isAvailableForPurchase": True,
+            "isPublished": True,
+            # "addVariants": ["addVariantsIds"]
+        }
+
+        override_dict(default_kwargs, kwargs)
+
+        variables = {
+            "id": product_id,
+            "input": {"updateChannels": [default_kwargs]}
+        }
+
+        query = """
+            mutation ProductChannelListingUpdate($id: ID!, $input: ProductChannelListingUpdateInput!) {
+                productChannelListingUpdate(id: $id, input: $input) {
+                    product {
+                        id
+                    }
+                    errors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+
+        errors = response["data"]["productChannelListingUpdate"]["errors"]
+        handle_errors(errors)
+
+        return response["data"]["productChannelListingUpdate"]["product"]["id"]
+
+    def product_variant_channel_listing_update(self, product_variant_id, **kwargs):
+        """  # Manage product variant prices in channels.
+
+        Parameters
+        ----------
+        id : str
+            id for which the product variant to be managed.
+        **kwargs : dict, optional
+            overrides the default value set to create the manage product variant prices in channels refer
+            to the ProductVariantChannelListingAddInput graphQL type to know what can be
+            overriden.
+
+        Returns
+        -------
+        id : str
+            the id of the product variant created.
+
+        Raises
+        ------
+        Exception
+            when errors is not an empty list.
+        """
+        default_kwargs = {
+            "channelId": "product_variant_id",
+            "price": 10,
+            "costPrice": 8
+        }
+
+        override_dict(default_kwargs, kwargs)
+
+        variables = {
+            "id": product_variant_id,
+            "input": [default_kwargs]
+        }
+
+        query = """
+            mutation ProductVariantChannelListingUpdate($id: ID!, $input: [ProductVariantChannelListingAddInput!]!) {
+                productVariantChannelListingUpdate(id: $id, input: $input) {
+                    variant {
+                        id
+                    }
+                    errors {
+                        field
+                        message
+                        code
+                    }
+                }
+            }
+        """
+
+        response = graphql_request(
+            query, variables, self.headers, self.endpoint_url)
+
+        errors = response["data"]["productVariantChannelListingUpdate"]["errors"]
+        handle_errors(errors)
+
+        return response["data"]["productVariantChannelListingUpdate"]["variant"]["id"]
 
     def create_product_image(self, product_id, file_path):
         """create a product image.
